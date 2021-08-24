@@ -67,9 +67,9 @@ contract NFTMarket is
     // ############
     // State
     // ############
-    IERC20 public sickletoken; //;
+    IERC20 public sickletoken; 
     address public taxRecipient; //game contract
-    //IPriceOracle public priceOracleSicklePerUsd; // we may want this for dynamic pricing
+    //IPriceOracle public priceOraclesicklePerUsd; // we may want this for dynamic pricing
 
     // address is IERC721 -- kept like this because of OpenZeppelin upgrade plugin bug
     mapping(address => mapping(uint256 => Listing)) private listings;
@@ -567,10 +567,9 @@ contract NFTMarket is
         allowedTokenTypes.remove(address(_tokenAddress));
     }
 
-    function recoverSickle(uint256 amount) public restricted {
+    function recoversickle(uint256 amount) public restricted {
         sickletoken.safeTransfer(msg.sender, amount); // dont expect we'll hold tokens here but might as well
     }
-  
 
     function onERC721Received(
         address, /* operator */

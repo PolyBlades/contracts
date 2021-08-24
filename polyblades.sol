@@ -28,10 +28,10 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
     Characters public characters;
     Weapons public weapons;
     IERC20 public sickletoken;//;
-    IPriceOracle public priceOracleSicklePerUsd;
+    IPriceOracle public priceOraclesicklePerUsd;
     IRandoms public randoms;
 
-    function initialize(IERC20 _sickletoken, Characters _characters, Weapons _weapons, IPriceOracle _priceOracleSicklPerUsd, IRandoms _randoms) public initializer {
+    function initialize(IERC20 _sickletoken, Characters _characters, Weapons _weapons, IPriceOracle _priceOraclesicklePerUsd, IRandoms _randoms) public initializer {
         __AccessControl_init();
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -40,7 +40,7 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
         sickletoken = _sickletoken;
         characters = _characters;
         weapons = _weapons;
-        priceOracleSickelPerUsd = _priceOracleSicklePerUsd;
+        priceOraclesicklePerUsd = _priceOraclesicklePerUsd;
         randoms = _randoms;
 
         staminaCostFight = 40;
@@ -109,7 +109,7 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
 
     uint256 public fightXpGain; // multiplied based on power differences
 
-    mapping(address => uint256) tokenRewards; // user adress : skill wei
+    mapping(address => uint256) tokenRewards; // user adress : sickle wei
     mapping(uint256 => uint256) xpRewards; // character id : xp
 
     int128 public oneFrac; // 1.0
@@ -129,44 +129,44 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
     int128 public burnWeaponFee;
     int128 public reforgeWeaponWithDustFee;
 
-    event FightOutcome(address indexed owner, uint256 indexed character, uint256 weapon, uint32 target, uint24 playerRoll, uint24 enemyRoll, uint16 xpGain, uint256 skillGain);
-    event InGameOnlyFundsGiven(address indexed to, uint256 skillAmount);
+    event FightOutcome(address indexed owner, uint256 indexed character, uint256 weapon, uint32 target, uint24 playerRoll, uint24 enemyRoll, uint16 xpGain, uint256 sickleGain);
+    event InGameOnlyFundsGiven(address indexed to, uint256 sickleAmount);
 
-    function recoverSkill(uint256 amount) public {
+    function recoversickle(uint256 amount) public {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Not admin");
 
         sickletoken.safeTransfer(msg.sender, amount);
     }
 
-    function getSkillToSubtract(uint256 _inGameOnlyFunds, uint256 _tokenRewards, uint256 _skillNeeded)
+    function getsickleToSubtract(uint256 _inGameOnlyFunds, uint256 _tokenRewards, uint256 _sickleNeeded)
         public
         pure
         returns (uint256 fromInGameOnlyFunds, uint256 fromTokenRewards, uint256 fromUserWallet) {
 
-        if(_skillNeeded <= _inGameOnlyFunds) {
-            return (_skillNeeded, 0, 0);
+        if(_sickleNeeded <= _inGameOnlyFunds) {
+            return (_sickleNeeded, 0, 0);
         }
 
-        _skillNeeded -= _inGameOnlyFunds;
+        _sickleNeeded -= _inGameOnlyFunds;
 
-        if(_skillNeeded <= _tokenRewards) {
-            return (_inGameOnlyFunds, _skillNeeded, 0);
+        if(_sickleNeeded <= _tokenRewards) {
+            return (_inGameOnlyFunds, _sickleNeeded, 0);
         }
 
-        _skillNeeded -= _tokenRewards;
+        _sickleNeeded -= _tokenRewards;
 
-        return (_inGameOnlyFunds, _tokenRewards, _skillNeeded);
+        return (_inGameOnlyFunds, _tokenRewards, _sickleNeeded);
     }
 
-    function getSkillNeededFromUserWallet(address playerAddress, uint256 skillNeeded)
+    function getsickleNeededFromUserWallet(address playerAddress, uint256 sickleNeeded)
         public
         view
-        returns (uint256 skillNeededFromUserWallet) {
+        returns (uint256 sickleNeededFromUserWallet) {
 
-        (,, skillNeededFromUserWallet) = getSkillToSubtract(
+        (,, sickleNeededFromUserWallet) = getsickleToSubtract(
             inGameOnlyFunds[playerAddress],
             tokenRewards[playerAddress],
-            skillNeeded
+            sickleNeeded
         );
     }
 
@@ -284,7 +284,7 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
         uint24 monsterRoll = getMonsterPowerRoll(targetPower, RandomUtil.combineSeeds(seed,1));
 
         uint16 xp = getXpGainForFight(playerFightPower, targetPower) * fightMultiplier;
-        uint256 tokens = usdToSkill(getTokenGainForFight(targetPower) * fightMultiplier);
+        uint256 tokens = usdTosickle(getTokenGainForFight(targetPower) * fightMultiplier);
 
         if(playerRoll < monsterRoll) {
             tokens = 0;
@@ -408,7 +408,7 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
         _payContract(msg.sender, mintCharacterFee);
 
         if(!promos.getBit(msg.sender, promos.BIT_FIRST_CHARACTER()) && characters.balanceOf(msg.sender) == 0) {
-            _giveInGameOnlyFundsFromContractBalance(msg.sender, usdToSkill(promos.firstCharacterPromoInGameOnlyFundsGivenInUsd()));
+            _giveInGameOnlyFundsFromContractBalance(msg.sender, usdTosickle(promos.firstCharacterPromoInGameOnlyFundsGivenInUsd()));
         }
 
         uint256 seed = randoms.getRandomSeed(msg.sender);
@@ -562,17 +562,17 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
     }
 
     function _requestPayFromPlayer(int128 usdAmount) internal view {
-        uint256 skillAmount = usdToSkill(usdAmount);
+        uint256 sickleAmount = usdTosickle(usdAmount);
 
         (,, uint256 fromUserWallet) =
-            getSkillToSubtract(
+            getsickleToSubtract(
                 inGameOnlyFunds[msg.sender],
                 tokenRewards[msg.sender],
-                skillAmount
+                sickleAmount
             );
 
         require(sickletoken.balanceOf(msg.sender) >= fromUserWallet,
-            string(abi.encodePacked("Not enough SKILL! Need ",RandomUtil.uint2str(skillAmount))));
+            string(abi.encodePacked("Not enough sickle! Need ",RandomUtil.uint2str(sickleAmount))));
     }
 
     function payContract(address playerAddress, int128 usdAmount) public restricted {
@@ -600,13 +600,13 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
     }
 
     function _payContract(address playerAddress, int128 usdAmount) internal {
-        _payContractConverted(playerAddress, usdToSkill(usdAmount));
+        _payContractConverted(playerAddress, usdTosickle(usdAmount));
     }
 
     function _payContractConverted(address playerAddress, uint256 convertedAmount) internal {
 
         (uint256 fromInGameOnlyFunds, uint256 fromTokenRewards, uint256 fromUserWallet) =
-            getSkillToSubtract(
+            getsickleToSubtract(
                 inGameOnlyFunds[playerAddress],
                 tokenRewards[playerAddress],
                 convertedAmount
@@ -621,7 +621,7 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
     }
 
     function _payPlayer(address playerAddress, int128 baseAmount) internal {
-        _payPlayerConverted(playerAddress, usdToSkill(baseAmount));
+        _payPlayerConverted(playerAddress, usdTosickle(baseAmount));
     }
 
     function _payPlayerConverted(address playerAddress, uint256 convertedAmount) internal {
@@ -690,28 +690,28 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
         characters.setCharacterLimit(max);
     }
 
-    function giveInGameOnlyFunds(address to, uint256 skillAmount) external restricted {
-        totalInGameOnlyFunds = totalInGameOnlyFunds.add(skillAmount);
-        inGameOnlyFunds[to] = inGameOnlyFunds[to].add(skillAmount);
+    function giveInGameOnlyFunds(address to, uint256 sickleAmount) external restricted {
+        totalInGameOnlyFunds = totalInGameOnlyFunds.add(sickleAmount);
+        inGameOnlyFunds[to] = inGameOnlyFunds[to].add(sickleAmount);
 
-        sickletoken.safeTransferFrom(msg.sender, address(this), skillAmount);
+        sickletoken.safeTransferFrom(msg.sender, address(this), sickleAmount);
 
-        emit InGameOnlyFundsGiven(to, skillAmount);
+        emit InGameOnlyFundsGiven(to, sickleAmount);
     }
 
-    function _giveInGameOnlyFundsFromContractBalance(address to, uint256 skillAmount) internal {
-        totalInGameOnlyFunds = totalInGameOnlyFunds.add(skillAmount);
-        inGameOnlyFunds[to] = inGameOnlyFunds[to].add(skillAmount);
+    function _giveInGameOnlyFundsFromContractBalance(address to, uint256 sickleAmount) internal {
+        totalInGameOnlyFunds = totalInGameOnlyFunds.add(sickleAmount);
+        inGameOnlyFunds[to] = inGameOnlyFunds[to].add(sickleAmount);
 
-        emit InGameOnlyFundsGiven(to, skillAmount);
+        emit InGameOnlyFundsGiven(to, sickleAmount);
     }
 
-    function giveInGameOnlyFundsFromContractBalance(address to, uint256 skillAmount) external restricted {
-        _giveInGameOnlyFundsFromContractBalance(to, skillAmount);
+    function giveInGameOnlyFundsFromContractBalance(address to, uint256 sickleAmount) external restricted {
+        _giveInGameOnlyFundsFromContractBalance(to, sickleAmount);
     }
 
-    function usdToSkill(int128 usdAmount) public view returns (uint256) {
-        return usdAmount.mulu(priceOracleSkillPerUsd.currentPrice());
+    function usdTosickle(int128 usdAmount) public view returns (uint256) {
+        return usdAmount.mulu(priceOraclesicklePerUsd.currentPrice());
     }
 
     function getCurrentHour() public view returns (uint256) {
@@ -772,7 +772,7 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
         return tokenRewards[wallet];
     }
 
-    function getTotalSkillOwnedBy(address wallet) public view returns (uint256) {
+    function getTotalsickleOwnedBy(address wallet) public view returns (uint256) {
         return inGameOnlyFunds[wallet] + getTokenRewardsFor(wallet) + sickletoken.balanceOf(wallet);
     }
 

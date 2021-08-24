@@ -25,11 +25,7 @@ contract ChainlinkRandoms is IRandoms, Pausable, AccessControl, VRFConsumerBase 
 
     uint256 private seed;
 
-    // BSC testnet details:
-    // LINK token: 0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06
-    // VRF Coordinator: 0xa555fC018435bef5A13C6c6870a9d4C11DEC329C
-    // Key Hash: 0xcaf3c3727e033261d383b315559476f48034c13b18f8cafed4d871abe5049186
-    // Fee: 0.1 * 10 ** 18 // 0.1 LINK
+    
 
     constructor(address _vrfCoordinator, address _link, bytes32 _keyHash, uint256 _fee)
         VRFConsumerBase(
