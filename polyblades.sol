@@ -27,11 +27,11 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
 
     Characters public characters;
     Weapons public weapons;
-    IERC20 public sickletoken;//0x154A9F9cbd3449AD22FDaE23044319D6eF2a1Fab;
-    IPriceOracle public priceOracleSkillPerUsd;
+    IERC20 public sickletoken;//;
+    IPriceOracle public priceOracleSicklePerUsd;
     IRandoms public randoms;
 
-    function initialize(IERC20 _sickletoken, Characters _characters, Weapons _weapons, IPriceOracle _priceOracleSkillPerUsd, IRandoms _randoms) public initializer {
+    function initialize(IERC20 _sickletoken, Characters _characters, Weapons _weapons, IPriceOracle _priceOracleSicklPerUsd, IRandoms _randoms) public initializer {
         __AccessControl_init();
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -40,7 +40,7 @@ contract PolyBlades is Initializable, AccessControlUpgradeable {
         sickletoken = _sickletoken;
         characters = _characters;
         weapons = _weapons;
-        priceOracleSkillPerUsd = _priceOracleSkillPerUsd;
+        priceOracleSickelPerUsd = _priceOracleSicklePerUsd;
         randoms = _randoms;
 
         staminaCostFight = 40;
